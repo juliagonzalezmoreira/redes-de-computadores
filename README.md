@@ -404,6 +404,10 @@ Acesse no navegador: http://<ENDEREÇO_IP_PUBLICO> ou  http://localhost
 
 Você verá a aplicação em uma das instâncias (app1, app2 ou app3)
 
+![loadbalancer](https://github.com/user-attachments/assets/aae9ad4d-110a-4f4a-bd11-64a1f671bedc)
+
+https://github.com/user-attachments/assets/4e658cb4-05d4-445b-9d36-96fdf60a574a
+
 ----
 
 ## 📝 Resumo:
