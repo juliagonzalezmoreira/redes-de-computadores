@@ -7,9 +7,9 @@ app = Flask(__name__)
 server_name = os.environ.get("SERVER_NAME", "Default Server")
 
 # Conexão com o banco de dados
-app.config['MYSQL_HOST'] = 'database.cbqfmw47p9tq.us-east-1.rds.amazonaws.com'
+app.config['MYSQL_HOST'] = 'database-1.cyuqerkjhmh8.us-east-1.rds.amazonaws.com'
 app.config['MYSQL_USER'] = 'admin'
-app.config['MYSQL_PASSWORD'] = 'atvRedes2025' #SENHA AQUI
+app.config['MYSQL_PASSWORD'] = 'ProjetoRedes' #SENHA AQUI
 app.config['MYSQL_DB'] = 'bdaws'
 
 mysql = MySQL(app)

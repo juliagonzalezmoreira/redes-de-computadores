@@ -1,14 +1,16 @@
 version: '3.8'
 
 services:
+  # Primeiro container da aplicação
   app1:
-    build: ./projeto-web
+    build: ./projeto-web            # Caminho onde está o Dockerfile
     container_name: app1
     environment:
-      SERVER_NAME: "Servidor 1"
+      SERVER_NAME: "Servidor 1"     # Envia esse nome como variável de ambiente
     ports:
-      - "5001:5000"
+      - "5001:5000"                 # Porta externa 5001 aponta para porta interna 5000
 
+  # Segundo container da aplicação
   app2:
     build: ./projeto-web
     container_name: app2
@@ -17,6 +19,7 @@ services:
     ports:
       - "5002:5000"
 
+  # Terceiro container da aplicação
   app3:
     build: ./projeto-web
     container_name: app3
@@ -25,6 +28,7 @@ services:
     ports:
       - "5003:5000"
 
+  # Container do NGINX (proxy reverso / load balancer)
   nginx:
     image: nginx:latest
     container_name: loadbalancer
@@ -33,6 +37,6 @@ services:
       - app2
       - app3
     ports:
-      - "80:80" 
+      - "80:80"                     # Porta padrão do HTTP
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro  # Monta arquivo de config do NGINX
