@@ -1,14 +1,15 @@
 version: '3.8'
 
-services:
+services:  # Seção onde definimos os serviços (containers)
+
   # Primeiro container da aplicação
   app1:
-    build: ./projeto-web            # Caminho onde está o Dockerfile
-    container_name: app1
+    build: ./projeto-web            # Caminho para o Dockerfile da aplicação
+    container_name: app1            # Nome do container no Docker (facilita identificar)
     environment:
-      SERVER_NAME: "Servidor 1"     # Envia esse nome como variável de ambiente
+      SERVER_NAME: "Servidor 1"     # Variável de ambiente que será usada na aplicação Flask
     ports:
-      - "5001:5000"                 # Porta externa 5001 aponta para porta interna 5000
+      - "5001:5000"                 # Porta externa 5001 → porta interna 5000
 
   # Segundo container da aplicação
   app2:
@@ -30,13 +31,14 @@ services:
 
   # Container do NGINX (proxy reverso / load balancer)
   nginx:
-    image: nginx:latest
-    container_name: loadbalancer
+    image: nginx:latest             # Usa a imagem mais recente do NGINX
+    container_name: loadbalancer    # Nome do container do NGINX
     depends_on:
       - app1
       - app2
-      - app3
+      - app3                        # Garante que o NGINX só suba após os apps
     ports:
-      - "80:80"                     # Porta padrão do HTTP
+      - "80:80"                     # Porta 80 do host → porta 80 do container (HTTP padrão)
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro  # Monta arquivo de config do NGINX
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+        # Monta o arquivo de configuração do NGINX no container
