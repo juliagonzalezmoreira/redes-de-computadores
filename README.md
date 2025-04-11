@@ -1,7 +1,34 @@
-## Trabalho Prático: Infraestrutura de Rede Integrada para a Empresa XPTO
+# 🚀 Trabalho Prático: Infraestrutura de Rede Integrada para a Empresa XPTO
 
-### 📍 Objetivo: 
-Projetar e implementar uma infraestrutura de TI robusta para a empresa XPTO integrando tecnologias modernas de redes e segurança. O projeto deve incluir um ambiente de acesso remoto seguro, gerenciamento de tráfego e serviços virtualizados, garantindo confiabilidade e eficiência para a organização. 
+## 🎯 Objetivo
+
+Este projeto tem como objetivo a criação de uma infraestrutura de TI robusta para a empresa XPTO, integrando tecnologias modernas de rede e computação em nuvem. O foco é desenvolver um ambiente de acesso seguro, alta disponibilidade e gerenciamento eficiente de tráfego e dados, promovendo confiabilidade e eficiência para a organização.
+
+---
+
+## 🧩 Arquitetura da Rede
+![dagrama-de-redes](https://github.com/user-attachments/assets/4d005e48-e671-4976-875d-962a99841b41)
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+![Docker](https://img.shields.io/badge/-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![NGINX](https://img.shields.io/badge/-NGINX-009639?style=for-the-badge&logo=nginx&logoColor=white)
+![Python](https://img.shields.io/badge/-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/-Flask-000000?style=for-the-badge&logo=flask&logoColor=white)
+![AWS](https://img.shields.io/badge/-AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white)
+![MySQL](https://img.shields.io/badge/-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+
+---
+
+## 🌐 Visão Geral
+
+A aplicação foi construída utilizando Docker, organizada em múltiplos containers. A estrutura contempla:
+
+- **3 containers backend Flask** (Python), replicando a aplicação
+- **NGINX como proxy reverso e load balancer**
+- **Banco de dados MySQL** hospedado na **AWS RDS**
 
 <Details>   
   <Summary>    
@@ -33,84 +60,387 @@ Definir a estrutura de endereçamento da empresa e implementar DHCP para gerenci
 
 </Details>
 
-### Arquitetura da rede
-![dagrama-de-redes](https://github.com/user-attachments/assets/4d005e48-e671-4976-875d-962a99841b41)
+---
+
+## 🏗️ Estrutura do Projeto
+
+O projeto está dividido em:
+
+- **Backend (Flask)**: Três instâncias da aplicação com rotas REST.
+- **NGINX**: Load balancer que distribui requisições para os containers backend.
+- **Docker Compose**: Orquestra os containers e redes.
+- **Banco de Dados (MySQL na AWS)**: Armazena os dados de usuários e pedidos.
+- **RDS da AWS**: Oferece segurança, escalabilidade e gerenciamento automatizado.
+
+---
+
+## 🧠 Arquitetura e Justificativa Técnica
+
+### Uso do Docker
+
+- Cada serviço é containerizado de forma independente.
+- Facilita deploy, manutenção e escalabilidade.
+- Garante isolamento de ambiente e portabilidade.
+
+### Balanceamento de Carga com NGINX
+
+- Garante distribuição uniforme das requisições.
+- Aumenta disponibilidade e tolerância a falhas.
+- Usa algoritmo **round-robin**.
+
+### Banco de Dados na AWS RDS
+
+- Alta disponibilidade com replicação e backups automáticos.
+- Segurança com grupos de segurança e acesso restrito por IP.
+- Gerenciamento simplificado.
+
+---
+
+## ⚙️ Explicação das Configurações
+
+### 🧱 Passo a Passo Completo da Infraestrutura (EC2, Docker, NGINX)
+
+1. Criar instância EC2 (Ubuntu 22.04)
+* Configure a porta 80 (HTTP) e porta 22 (SSH) no grupo de segurança
+
+2. Acessar a instância via SSH
+No terminal da sua máquina:
+
+```
+chmod 400 exemplo.pem
+ssh -i "exemplo.pem" ubuntu@<ENDEREÇO_IP_PUBLICO>
+```
+3. Atualizar sistema e instalar Docker + Docker Compose
+```
+sudo apt update && sudo apt upgrade -y
+sudo apt install docker.io docker-compose nano -y
+```
+📁 4. Criar estrutura de diretórios e arquivos
+Criar pasta do projeto
+```
+mkdir projeto
+cd projeto
+```
+
+Criar arquivo app.py
+```
+nano app.py
+```
+Conteúdo app.py:
+
+```
+# Importa as bibliotecas necessárias
+from flask import Flask, render_template, url_for, request, redirect
+from flask_mysqldb import MySQL
+import os
+
+# Cria a aplicação Flask
+app = Flask(__name__)
+
+# Captura o nome do servidor enviado pela variável de ambiente (usado para mostrar qual container respondeu)
+server_name = os.environ.get("SERVER_NAME", "Default Server")
+
+# Configurações de conexão com o banco de dados MySQL hospedado na AWS RDS
+app.config['MYSQL_HOST'] = 'database-1.cyuqerkjhmh8.us-east-1.rds.amazonaws.com'
+app.config['MYSQL_USER'] = 'admin'
+app.config['MYSQL_PASSWORD'] = 'ProjetoRedes'  # Atenção: nunca compartilhe senhas reais em repositórios públicos!
+app.config['MYSQL_DB'] = 'bdaws'
+
+# Inicializa o MySQL com as configurações acima
+mysql = MySQL(app)
+
+# Rota principal para cadastro de usuários
+@app.route('/', methods=['GET', 'POST'])
+def cadastro():
+    if request.method == "POST":
+        # Coleta os dados enviados pelo formulário
+        nome = request.form['nome']
+        email = request.form['email']
+        filme = request.form['filme']
+        nota = request.form['nota']
+        opiniao = request.form['opiniao']
+
+        # Insere os dados no banco de dados
+        cur = mysql.connection.cursor()
+        cur.execute("INSERT INTO usuarios(nome, email, filme, nota, opiniao) VALUES (%s, %s, %s, %s, %s)", 
+                    (nome, email, filme, nota, opiniao))
+        mysql.connection.commit()
+        cur.close()
+
+        # Recarrega a página após o cadastro
+        return render_template('cadastro.html')
+    
+    # Renderiza o formulário se for GET
+    return render_template('cadastro.html')
+
+# Rota para editar um cadastro existente
+@app.route('/editar/<int:id>', methods=['GET', 'POST'])
+def editar(id):
+    cur = mysql.connection.cursor()
+    if request.method == 'POST':
+        # Atualiza os dados do usuário no banco
+        nome = request.form['nome']
+        email = request.form['email']
+        filme = request.form['filme']
+        nota = request.form['nota']
+        opiniao = request.form['opiniao']
+
+        cur.execute("""
+            UPDATE usuarios 
+            SET nome=%s, email=%s, filme=%s, nota=%s, opiniao=%s 
+            WHERE id=%s
+        """, (nome, email, filme, nota, opiniao, id))
+        mysql.connection.commit()
+        cur.close()
+
+        # Redireciona para a página de listagem após salvar
+        return redirect(url_for('users'))
+    
+    # Busca os dados do usuário no banco para preencher o formulário
+    cur.execute("SELECT * FROM usuarios WHERE id = %s", (id,))
+    user = cur.fetchone()
+    cur.close()
+    return render_template('editar.html', user=user)
+
+# Rota para excluir um usuário
+@app.route('/excluir/<int:id>', methods=['POST'])
+def excluir(id):
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM usuarios WHERE id = %s", (id,))
+    mysql.connection.commit()
+    cur.close()
+    return redirect(url_for('users'))
+
+# Rota para listar todos os usuários cadastrados
+@app.route('/users')
+def users():
+    cur = mysql.connection.cursor()
+    users = cur.execute("SELECT * FROM usuarios")
+
+    if users > 0:
+        userDetails = cur.fetchall()  # Pega todos os registros
+        return render_template("users.html", userDetails=userDetails)
+    
+    # Caso não haja nenhum registro
+    return 'Nenhum usuário encontrado.'
+
+# Torna o nome do servidor acessível nos templates HTML
+@app.context_processor
+def inject_server_name():
+    return dict(server_name=server_name)
+
+# Roda a aplicação Flask
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
+```
+Criar requirements.txt
+```
+nano requirements.txt
+```
+Conteúdo:
+```
+# Utilitário de sinais usado internamente pelo Flask
+blinker==1.9.0
+
+# Biblioteca para criação de comandos de linha de comando (CLI), usada pelo Flask
+click==8.1.8
+
+# Fornece suporte a cores no terminal, útil em ambientes Windows
+colorama==0.4.6
+
+# Microframework web principal utilizado no projeto
+Flask==3.1.0
+
+# Fornece funções para segurança, como geração de tokens, usado internamente no Flask
+itsdangerous==2.2.0
+
+# Template engine utilizada pelo Flask para renderizar HTML
+Jinja2==3.1.6
+
+# Dependência do Jinja2, usada para manipulação segura de strings HTML
+MarkupSafe==3.0.2
+
+# Ferramenta WSGI que gerencia requisições/respostas HTTP no Flask
+Werkzeug==3.1.3
+
+# Extensão do Flask para integração com bancos de dados MySQL
+Flask-MySQLdb==2.0.0
+```
+
+Criar Dockerfile
+```
+nano Dockerfile
+```
+Conteúdo:
+
+```
+# Usa uma imagem leve do Python baseada no Debian Bookworm
+FROM python:3.9-slim-bookworm
+
+# Atualiza os pacotes do sistema e instala dependências necessárias para compilar e conectar ao MySQL
+RUN apt-get update && apt-get install -y \
+    build-essential \                   # Ferramentas para compilar pacotes Python com código C/C++
+    default-libmysqlclient-dev \       # Biblioteca necessária para conectar com MySQL (ex: mysqlclient)
+    pkg-config \                        # Utilitário que ajuda na compilação de pacotes nativos
+    && rm -rf /var/lib/apt/lists/*     # Limpa o cache do APT para reduzir o tamanho final da imagem
+
+# Define o diretório de trabalho dentro do container (tudo será executado a partir daqui)
+WORKDIR /app
+
+# Copia primeiro o arquivo requirements.txt para instalar as dependências (boa prática de cache)
+COPY requirements.txt .
+
+# Instala as bibliotecas Python necessárias para o projeto
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copia o restante do código da aplicação (app.py, templates, etc.) para o container
+COPY . .
+
+# Expõe a porta 5000, que é onde o Flask roda por padrão
+EXPOSE 5000
+
+# Comando que será executado ao iniciar o container (roda o app Flask)
+CMD ["python", "app.py"]
+
+```
+🌐 5. Configurar NGINX como Proxy Reverso e Load Balancer
+Voltar para pasta raiz e criar pasta nginx
+```
+cd ..
+mkdir nginx
+cd nginx
+nano default.conf
+```
+Conteúdo default.conf:
+```
+# Define o grupo de servidores (backend) para balanceamento de carga
+upstream backend {
+        server app1:5000 weight=3;  # O container app1 tem mais peso (será escolhido com mais frequência)
+        server app2:5000 weight=1;  # app2 e app3 têm menos peso, usados com menos frequência
+        server app3:5000 weight=1;
+}
+
+# Configuração do servidor NGINX que escuta na porta 80
+server {
+        listen 80;  # Porta padrão para requisições HTTP
+
+        location / {
+                # Redireciona as requisições para o grupo de servidores definido acima
+                proxy_pass http://backend;
+
+                # Encaminha o nome do host original (opcional, mas pode ser útil para logs)
+                proxy_set_header Host $host;
+
+                # Encaminha o IP real do cliente que fez a requisição
+                proxy_set_header X-Real-IP $remote_addr;
+        }
+}
+
+```
+
+🧩 6. Criar docker-compose.yml na raiz do projeto
+
+```bash
+
+cd ..
+nano docker-compose.yml
+```
+Conteúdo:
+```
+version: '3.8'  # Define a versão do Docker Compose
+
+services:  # Seção onde definimos os serviços (containers)
+
+  # Primeiro container da aplicação
+  app1:
+    build: ./projeto-web            # Caminho para o Dockerfile da aplicação
+    container_name: app1            # Nome do container no Docker (facilita identificar)
+    environment:
+      SERVER_NAME: "Servidor 1"     # Variável de ambiente que será usada na aplicação Flask
+    ports:
+      - "5001:5000"                 # Porta externa 5001 → porta interna 5000
+
+  # Segundo container da aplicação
+  app2:
+    build: ./projeto-web
+    container_name: app2
+    environment:
+      SERVER_NAME: "Servidor 2"
+    ports:
+      - "5002:5000"
+
+  # Terceiro container da aplicação
+  app3:
+    build: ./projeto-web
+    container_name: app3
+    environment:
+      SERVER_NAME: "Servidor 3"
+    ports:
+      - "5003:5000"
+
+  # Container do NGINX atuando como proxy reverso e balanceador de carga
+  nginx:
+    image: nginx:latest             # Usa a imagem mais recente do NGINX
+    container_name: loadbalancer    # Nome do container do NGINX
+    depends_on:
+      - app1
+      - app2
+      - app3                        # Garante que o NGINX só suba após os apps
+    ports:
+      - "80:80"                     # Porta 80 do host → porta 80 do container (HTTP padrão)
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+        # Monta o arquivo de configuração do NGINX no container
+        # :ro = read-only (protege contra alterações acidentais)
+
+```
+      
+▶️ 7. Rodar a aplicação
+```bash
+docker-compose up -d
+```
+Acesse no navegador: http://<ENDEREÇO_IP_PUBLICO> ou  http://localhost
+
+Você verá a aplicação em uma das instâncias (app1, app2 ou app3)
+
+![loadbalancer](https://github.com/user-attachments/assets/aae9ad4d-110a-4f4a-bd11-64a1f671bedc)
+
+https://github.com/user-attachments/assets/4e658cb4-05d4-445b-9d36-96fdf60a574a
+
+----
+
+## 📝 Resumo:
+🐳 Dockerfile
+* Define como a imagem do backend será criada:
+* Usa imagem base Python 3.9;
+* Instala bibliotecas do sistema e dependências Python (via requirements.txt);
+* Expõe a porta 5000 para acesso à aplicação Flask;
+* Inicia a aplicação com python app.py.
+
+💾 Banco de Dados (AWS RDS MySQL)
+* Banco de dados hospedado na AWS RDS;
+* Tabela criada para armazenar dados dos usuários e suas opiniões sobre filmes.
+
+🌐 Nginx (Proxy Reverso + Load Balancer)
+* Distribui o tráfego entre 3 containers de backend (app1, app2, app3);
+* Usa pesos para definir quais instâncias recebem mais requisições (app1 recebe mais);
+* Encaminha requisições da porta 80 para o backend de forma equilibrada.
+
+🧩 Docker Compose
+* Orquestra a execução de todos os containers;
+* Define os serviços app1, app2, app3 (backends) e nginx;
+* Garante que o Nginx só inicie após os backends estarem prontos.
+
+🔁 Fluxo das Requisições
+* O usuário acessa o sistema via navegador (porta 80);
+* O Nginx recebe a requisição e a redireciona para uma instância de backend;
+* O backend processa e consulta o banco de dados, se necessário;
+* O Nginx retorna a resposta ao usuário.
+
+✅ Benefícios da Arquitetura
+* Escalável: Suporta mais acessos com múltiplos containers;
+* Alta Disponibilidade: Se uma instância falhar, as outras continuam funcionando;
+* Fácil de manter: Componentes isolados e banco de dados gerenciado na nuvem.
 
 
-### Tecnologias usadas
-![AWS](https://img.shields.io/badge/aws-232F3E.svg?style=for-the-badge&logo=aws&logoColor=white)
-![Ubuntu](https://img.shields.io/badge/ubuntu-E95420.svg?style=for-the-badge&logo=ubuntu&logoColor=white)
-![Nginx](https://img.shields.io/badge/nginx-009639.svg?style=for-the-badge&logo=nginx&logoColor=white)
-![Docker](https://img.shields.io/badge/docker-2496ED.svg?style=for-the-badge&logo=docker&logoColor=white)
-![HTML5](https://img.shields.io/badge/html5-E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/css3-1572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
-![Python](https://img.shields.io/badge/python-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)
-![AWS RDS](https://img.shields.io/badge/AWS_RDS-527FFF.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
-![MySQL](https://img.shields.io/badge/mysql-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white)
-
-### Visão Geral
-Aplicação web baseada em Docker que consiste em uma arquitetura de múltiplos containers. É dividida em três componentes principais: o backend (que executa o servidor Python/Flask), o Nginx (como proxy reverso e balanceador de carga), e o Banco de Dados AWS RDS (MySQL) (para armazenamento de dados relacionados aos usuários e suas opiniões sobre filmes).
-
-### Estrutura do Projeto
-O projeto está organizado da seguinte forma:
-- Backend (app1, app2, app3): Três instâncias da aplicação backend, cada uma executando a mesma aplicação, mas distribuídas para melhorar a escalabilidade e o balanceamento de carga;
-- Nginx: Atua como um proxy reverso e balanceador de carga, distribuindo as requisições entre as três instâncias de backend (app1, app2, app3);
-- Banco de Dados AWS RDS (MySQL): Banco de dados que armazena as informações dos usuários e suas interações com a aplicação (como suas avaliações de filmes).
-
-### Arquitetura e Justificativa
-
-#### Escolha do Docker
-O uso do Docker permite isolar os componentes da aplicação (backend e proxy) em containers separados. Isso oferece vantagens:
-
-1. Isolamento e Independência: Cada parte funciona de forma independente, o que facilita a manutenção e a atualização de componentes sem afetar o funcionamento dos outros;
-2. Escalabilidade: Com o Docker, é fácil escalar a aplicação para mais instâncias do backend, conforme necessário. Por exemplo, podemos adicionar mais containers appX sem alterar a configuração de outros serviços;
-3. Portabilidade: A aplicação é executada no mesmo ambiente em qualquer máquina ou servidor, garantindo consistência entre desenvolvimento, testes e produção.
-
-#### Escolha do Load Balancer (Nginx)
-Estamos usando o Nginx como proxy reverso e load balancer por ser uma solução robusta, amplamente utilizada, e de fácil configuração. Ele distribui o tráfego de entrada entre as instâncias do backend (app1, app2, app3), garantindo:
-
-1. Desempenho otimizado: O Nginx é altamente eficiente na distribuição de requisições;
-2. Alta disponibilidade: Caso uma das instâncias do backend falhe, o Nginx pode redirecionar as requisições para outras instâncias disponíveis;
-3. Escalabilidade: A configuração do Nginx permite facilmente adicionar ou remover instâncias de backend.
-
-#### Banco de Dados - AWS RDS (MySQL)
-Utilizar o RDS permite escalar o banco de dados de forma automática, além de contar com a robustez e segurança fornecidas pela AWS. A escolha do MySQL como sistema de gerenciamento de banco de dados é devido à sua simplicidade e compatibilidade com a aplicação.
-
-### Explicação das Configurações
-
-#### Dockerfile
-O arquivo Dockerfile define como a imagem do backend será construída:
-- Base de Imagem: Utilizamos uma imagem base do Python (python:3.9-slim) para rodar a aplicação;
-- Instalação de Dependências: O comando ```sudo apt update``` instala as dependências nativas necessárias para o funcionamento da aplicação, como bibliotecas para conexão com o MySQL;
-- Instalação das Dependências Python: O requirements.txt é copiado para dentro do container e as dependências do Python são instaladas;
-- Expõe a Porta: A aplicação Flask vai rodar na porta 5000 dentro do container. Essa porta é exposta para permitir a comunicação entre os containers e com o exterior;
-- Comando para iniciar a aplicação: O container é configurado para executar o comando python app.py quando iniciado, o que inicia o servidor Flask.
-
-#### Banco de Dados - AWS RDS (MySQL)
-O banco de dados MySQL está hospedado na AWS, utilizando o serviço RDS (Relational Database Service). A tabela usuarios foi criada para armazenar informações sobre filmes e opiniões dos usuários.
-
-#### Nginx - Proxy Reverso e Load Balancer
-O arquivo default.conf contém a configuração do Nginx para distribuir o tráfego entre os três containers de backend. A configuração do upstream define o grupo de servidores de backend (app1, app2, app3):
-
-- Pesos Diferenciados: Cada servidor tem um peso. O app1 tem um peso maior (3), significando que ele irá receber mais tráfego do que os outros dois servidores (app2 e app3), que têm peso 1;
-- Proxy Reverso: Quando uma requisição chega na porta 80 (do Nginx), ela é redirecionada para um dos servidores backend definidos no upstream backend. O Nginx repassa as requisições para os backends disponíveis de forma equilibrada;
-- A configuração de proxy_set_header assegura que os cabeçalhos HTTP corretos sejam passados para os servidores backend, incluindo o IP do cliente original.
-
-#### Docker Compose
-O arquivo docker-compose.yml orquestra a execução dos containers. Ele define os seguintes serviços:
-
-- app1, app2, app3: Cada um desses serviços é uma instância da aplicação backend. A opção build aponta para o diretório onde o Dockerfile está localizado, garantindo que a imagem seja construída a partir do código-fonte. As portas 5001, 5002, e 5003 são mapeadas para as portas internas 5000, permitindo que as instâncias se comuniquem entre si.
-- Nginx: O Nginx depende dos três containers de backend. Ele escuta na porta 80 e repassa as requisições para o backend de acordo com a configuração do default.conf. A configuração depends_on garante que o Nginx só será iniciado após as instâncias do backend estarem prontas.
-
-### Fluxo de Requisições
-1. O usuário envia uma requisição para o servidor, que é direcionada à porta 80 do Nginx;
-2. O Nginx, atuando como proxy reverso, recebe a requisição e a encaminha para uma das instâncias de backend (app1, app2, ou app3) com base na configuração de balanceamento de carga;
-3. A instância do backend processa a requisição, interage com o banco de dados (se necessário) e envia a resposta de volta para o Nginx;
-4. O Nginx retorna a resposta ao usuário.
-
-### Conclusão e Benefícios da Arquitetura
-- Escalabilidade: O uso de múltiplas instâncias de backend permite que a aplicação lide com mais tráfego, pois o Nginx distribui as requisições entre os servidores;
-- Alta Disponibilidade: Com o Nginx como load balancer, se uma instância falhar, as outras ainda poderão atender às requisições, garantindo a continuidade do serviço;
-- Facilidade de Manutenção: O backend e o proxy estão isolados em containers separados, o que facilita a manutenção e a atualização de componentes sem afetar os outros. Além disso, o banco de dados, hospedado no AWS RDS MySQL, oferece vantagens como gerenciamento simplificado, backups automáticos, monitoramento integrado, entre outras. Isso garante que o banco de dados seja mantido de forma eficiente e sem a necessidade de intervenção direta no servidor.
-
-Esta abordagem modular e escalável é uma solução ideal para aplicações que precisam lidar com uma carga variável ou crescer conforme a demanda.
