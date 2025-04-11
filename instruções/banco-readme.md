@@ -39,7 +39,7 @@
 ![image](https://github.com/user-attachments/assets/efe1016f-d105-4179-9fdb-b76140467dc4)
 
 * Não se esqueça de criar o database e tabela no seu mysql workbench.
-* [Acesse bdaws.txt](./projeto-web/bdaws.txt)
+* [Acesse bdaws.txt](../projeto-web/bdaws.txt)
 ---
 
 ### Volte para as intruções do DOCKER
