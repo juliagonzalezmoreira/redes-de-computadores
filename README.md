@@ -55,6 +55,7 @@ A aplicação foi construída utilizando Docker, organizada em múltiplos contai
 
   * Acesse para ver o passo a passo do [Projeto](./instruções/docker-readme.md)
   * Acesse para ver o passo a passo do [Banco de Dados](./instruções/banco-readme.md) no RDS.
+  * Acesse para ver o passo a passo do [VPN](./instruções/vpn-readme.md)
 
 </br>
 <Details> 
